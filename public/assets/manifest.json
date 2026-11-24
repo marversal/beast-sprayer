@@ -1,0 +1,7 @@
+{
+  "_note": "Character IDs are display labels only. Configurable. Final IDs confirmed: #5761 and #541 (see ASSET_MANIFEST.md). Edit here (no rebuild needed).",
+  "characters": [
+    { "key": "bear", "id": "5761", "sprite": "assets/sprites/players/bear.png", "head": "assets/ui/head_bear.png", "muzzle": [306, 128] },
+    { "key": "white_horned", "id": "541", "sprite": "assets/sprites/players/white_horned.png", "head": "assets/ui/head_white_horned.png", "muzzle": [308, 150] }
+  ]
+}

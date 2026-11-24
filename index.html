@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>BEAST SPRAYER</title>
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <meta name="description" content="Beast Sprayer - spraying dem haters daily. A 2D browser arcade game." />
+</head>
+<body>
+  <div id="viewport">
+    <div id="stage">
+      <canvas id="game" width="1672" height="941"></canvas>
+
+      <!-- ===================== HUD (DOM, live-updated) ===================== -->
+      <div id="hud" class="hidden">
+        <div class="pw" style="left:14px;top:10px;width:372px;height:146px">
+          <div class="panel pink"><div class="in beast-in">
+            <div class="beast-id">BEAST <span id="hud-id">#5761</span></div>
+            <div class="lives" id="hud-lives"></div>
+          </div></div>
+        </div>
+
+        <div class="pw" style="left:742px;top:16px;width:190px;height:58px">
+          <div class="panel pink"><div class="in row"><span class="lbl">WAVE</span>&nbsp;<span class="val" id="hud-wave">00</span></div></div>
+        </div>
+
+        <div class="pw" style="left:1300px;top:10px;width:364px;height:78px">
+          <div class="panel cyan"><div class="in row big"><span class="wht">SCORE:</span>&nbsp;<span class="val" id="hud-score">000000</span></div></div>
+        </div>
+
+        <div class="pw" style="left:1378px;top:92px;width:266px;height:68px">
+          <button id="btn-replay" class="panel pink btn"><span class="in row wht">REPLAY</span></button>
+        </div>
+
+        <div class="pw" style="left:20px;top:770px;width:1130px;height:68px">
+          <div class="panel pink"><div class="in row small" id="hud-sprayed"></div></div>
+        </div>
+
+        <div class="pw" style="left:20px;top:850px;width:420px;height:54px">
+          <div class="panel pink"><div class="in row small">
+            <span class="lbl">GOLD:</span>
+            <img class="gicon" id="ico-can" alt="can" /><span class="val" id="hud-can">00</span>
+            <span class="sep">|</span>
+            <img class="gicon" id="ico-mask" alt="mask" /><span class="val" id="hud-mask">00</span>
+          </div></div>
+        </div>
+
+        <div class="pw" style="left:1190px;top:796px;width:464px;height:64px">
+          <div class="panel pink"><div class="in row small">
+            <span class="lbl">HEALTH:</span>
+            <div class="hbar" id="hud-health"></div>
+          </div></div>
+        </div>
+
+        <div class="pw" style="left:459px;top:848px;width:756px;height:58px">
+          <div class="panel pink"><div class="in row small wht">
+            LEFT AND RIGHT&nbsp;<i class="tri l"></i>&nbsp;<i class="tri r"></i>&nbsp;KEYS - PRESS&nbsp;<span class="val">[1]</span>&nbsp;TO SPRAY.
+          </div></div>
+        </div>
+
+        <div class="credit"><span>CONCEPT: MARGOOSE - CODE: MARVERSAL [AKCB 2026]</span></div>
+      </div>
+
+      <!-- ===================== Splash / menu ===================== -->
+      <div id="splash">
+        <img class="decal" src="assets/ui/splash_green_3.png" style="left:-70px;top:-40px;width:520px" alt="" />
+        <img class="decal" src="assets/ui/splash_green_2.png" style="left:1270px;top:-30px;width:480px" alt="" />
+        <img class="decal" src="assets/ui/splash_green_1.png" style="left:420px;top:-30px;width:830px" alt="" />
+        <div class="title" data-text="Beast Sprayer"><span>Beast Sprayer</span></div>
+        <div class="tagline"><span>SPRAYING DEM HATERS DAILY</span></div>
+
+        <img class="decal" src="assets/ui/splash_green_3.png" style="left:560px;top:190px;width:560px;opacity:.95" alt="" />
+        <div class="select-head"><span>SELECT BEAST</span></div>
+
+        <div id="frames"></div>
+
+        <img class="decal" src="assets/ui/splash_green_2.png" style="left:470px;top:760px;width:760px" alt="" />
+        <button id="btn-start" class="start-btn"><span>PRESS START</span></button>
+        <div class="splash-hint">&larr; &rarr; SELECT &nbsp;|&nbsp; ENTER / SPACE / CLICK START &nbsp;|&nbsp; M = SOUND &nbsp;|&nbsp; P = PAUSE</div>
+      </div>
+
+      <!-- ===================== Game over ===================== -->
+      <div id="gameover" class="hidden">
+        <div class="go-card">
+          <div class="go-title">GAME OVER</div>
+          <div class="go-score">SCORE <span id="go-score">000000</span></div>
+          <div class="go-stats" id="go-stats"></div>
+          <div class="go-btns">
+            <button id="btn-restart" class="go-btn primary">RESTART</button>
+            <button id="btn-menu" class="go-btn">CHANGE BEAST</button>
+          </div>
+          <div class="go-hint">ENTER = RESTART</div>
+        </div>
+      </div>
+
+      <!-- ===================== Touch fallback ===================== -->
+      <div id="touch" class="hidden">
+        <button id="t-left" aria-label="left">&#9664;</button>
+        <button id="t-right" aria-label="right">&#9654;</button>
+        <button id="t-spray" aria-label="spray">SPRAY [1]</button>
+      </div>
+
+      <div id="loading">LOADING...</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

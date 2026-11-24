@@ -1,0 +1,205 @@
+{
+ "player_bear": {
+  "file": "assets/sprites/players/bear.png",
+  "source_bounds": [
+   56,
+   36,
+   374,
+   438
+  ],
+  "size": [
+   318,
+   402
+  ]
+ },
+ "player_white_horned": {
+  "file": "assets/sprites/players/white_horned.png",
+  "source_bounds": [
+   46,
+   499,
+   370,
+   894
+  ],
+  "size": [
+   324,
+   395
+  ]
+ },
+ "enemy_heros": {
+  "file": "assets/sprites/enemies/heros.png",
+  "source_bounds": [
+   21,
+   38,
+   217,
+   240
+  ],
+  "size": [
+   196,
+   202
+  ]
+ },
+ "enemy_fents": {
+  "file": "assets/sprites/enemies/fents.png",
+  "source_bounds": [
+   285,
+   41,
+   474,
+   240
+  ],
+  "size": [
+   189,
+   199
+  ]
+ },
+ "enemy_bots": {
+  "file": "assets/sprites/enemies/bots.png",
+  "source_bounds": [
+   547,
+   41,
+   731,
+   239
+  ],
+  "size": [
+   184,
+   198
+  ]
+ },
+ "enemy_cops": {
+  "file": "assets/sprites/enemies/cops.png",
+  "source_bounds": [
+   26,
+   297,
+   204,
+   459
+  ],
+  "size": [
+   178,
+   162
+  ]
+ },
+ "enemy_dogs": {
+  "file": "assets/sprites/enemies/dogs.png",
+  "source_bounds": [
+   285,
+   310,
+   477,
+   459
+  ],
+  "size": [
+   192,
+   149
+  ]
+ },
+ "enemy_drones": {
+  "file": "assets/sprites/enemies/drones.png",
+  "source_bounds": [
+   538,
+   310,
+   751,
+   415
+  ],
+  "size": [
+   213,
+   105
+  ]
+ },
+ "collectible_gold_can": {
+  "file": "assets/sprites/collectibles/gold_can.png",
+  "source_bounds": [
+   83,
+   55,
+   177,
+   202
+  ],
+  "size": [
+   94,
+   147
+  ]
+ },
+ "collectible_gold_mask": {
+  "file": "assets/sprites/collectibles/gold_mask.png",
+  "source_bounds": [
+   329,
+   52,
+   452,
+   202
+  ],
+  "size": [
+   123,
+   150
+  ]
+ },
+ "spray_short": {
+  "file": "assets/sprites/spray/spray_short.png",
+  "source_bounds": [
+   133,
+   74,
+   288,
+   144
+  ],
+  "size": [
+   155,
+   70
+  ]
+ },
+ "spray_medium": {
+  "file": "assets/sprites/spray/spray_medium.png",
+  "source_bounds": [
+   85,
+   173,
+   335,
+   255
+  ],
+  "size": [
+   250,
+   82
+  ]
+ },
+ "spray_long": {
+  "file": "assets/sprites/spray/spray_long.png",
+  "source_bounds": [
+   29,
+   281,
+   383,
+   377
+  ],
+  "size": [
+   354,
+   96
+  ]
+ },
+ "background_alley_clean": {
+  "file": "assets/backgrounds/alley_clean.png",
+  "size": [
+   1672,
+   941
+  ],
+  "source": "hud_5761_example.png",
+  "repainted": {
+   "bottom_rows": [
+    748,
+    941
+   ],
+   "top_inpaint_rects": [
+    [
+     14,
+     10,
+     386,
+     156
+    ],
+    [
+     1300,
+     10,
+     1664,
+     90
+    ],
+    [
+     1378,
+     90,
+     1644,
+     162
+    ]
+   ]
+  }
+ }
+}
