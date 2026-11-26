@@ -28,6 +28,9 @@ export class Game {
     this.score = 0;
     this.kills = Object.fromEntries(Object.keys(CONFIG.enemies).map((k) => [k, 0]));
     this.gold = { gold_can: 0, gold_mask: 0 };
+    this.smartBombs = 0;
+    this.bombCooldown = CONFIG.smartBomb.initialCooldownSeconds;
+    this.bombHold = 0;
     this.lives = P.lives;
     this.health = P.maxHealth;
     this.player = { x: W / 2, face: 1, vx: 0, invuln: 0, cooldown: 0, recoil: 0, walk: 0 };
@@ -37,7 +40,7 @@ export class Game {
     this.texts = [];
     this.rings = [];
     this.pickups = [];
-    this.wave = 0;
+    this.wave = Math.max(0, CONFIG.waves.startWave - 1);
     this.toSpawn = 0;
     this.spawnTimer = 0;
     this.waveDelay = CONFIG.waves.firstWaveDelay;
@@ -78,6 +81,7 @@ export class Game {
     this.updateEnemies(dt);
     this.updateSprays(dt);
     this.updatePickups(dt);
+    this.updateSmartBomb(dt);
     this.updateEffects(dt);
   }
 
@@ -276,7 +280,7 @@ export class Game {
 
   gameOver() {
     this.mode = 'gameover';
-    this.summary = { score: this.score, kills: { ...this.kills }, gold: { ...this.gold }, wave: this.wave };
+    this.summary = { score: this.score, kills: { ...this.kills }, gold: { ...this.gold }, smartBombs: this.smartBombs, wave: this.wave };
     sfx.over();
   }
 
@@ -332,7 +336,7 @@ export class Game {
     }
   }
 
-  killEnemy(e, award) {
+  killEnemy(e, award, opts = {}) {
     e.state = 'dying';
     e.vaporT = 0;
     const b = this.enemyBox(e);
@@ -341,6 +345,7 @@ export class Game {
     this.score += e.def.points;
     this.kills[e.type] += 1;
     this.floatText(e.x, b.top, `+${e.def.points}`, '#b6ff2a');
+    if (opts.silent) return;
     sfx.kill();
     if (Math.random() < CONFIG.collectibles.dropChanceOnKill) this.spawnPickup(null, e.x);
   }
@@ -352,7 +357,7 @@ export class Game {
     if (x === null) {
       do { x = rand(CONFIG.player.minX + 40, CONFIG.player.maxX - 40); } while (Math.abs(x - this.player.x) < 260);
     }
-    const pk = { kind, x: clamp(x, 120, W - 120), t: 0, life: C.lifetime };
+    const pk = { kind, x: clamp(x, 120, W - 120), t: 0, life: kind === 'smart_bomb' ? CONFIG.smartBomb.lifetime : C.lifetime };
     this.pickups.push(pk);
     return pk;
   }
@@ -368,7 +373,8 @@ export class Game {
     for (const pk of this.pickups) {
       pk.t += dt;
       pk.life -= dt;
-      if (Math.abs(pk.x - p.x) < C.pickupRadius) {
+      const radius = pk.kind === 'smart_bomb' ? CONFIG.smartBomb.pickupRadius : C.pickupRadius;
+      if (pk.life > 0 && Math.abs(pk.x - p.x) < radius) {
         pk.life = -1;
         this.collect(pk);
       }
@@ -377,6 +383,7 @@ export class Game {
   }
 
   collect(pk) {
+    if (pk.kind === 'smart_bomb') { this.detonateSmartBomb(pk); return; }
     const def = CONFIG.collectibles[pk.kind];
     const y = CONFIG.player.groundY - 90;
     this.score += def.points;
@@ -395,6 +402,94 @@ export class Game {
     } else {
       sfx.can();
     }
+  }
+
+  // -------------------------------------------------------------- smart bomb
+  /** alive enemies that count towards "heavily surrounded" */
+  isSurrounded() {
+    const B = CONFIG.smartBomb;
+    const px = this.player.x;
+    let near = 0;
+    let left = 0;
+    let right = 0;
+    for (const e of this.enemies) {
+      if (e.state !== 'alive') continue;
+      const dx = e.x - px;
+      const ad = Math.abs(dx);
+      if (ad <= B.surroundRadius) near += 1;
+      if (ad <= B.bothSidesRadius) { if (dx < 0) left += 1; else right += 1; }
+    }
+    return near >= B.surroundCount || (left >= B.bothSidesCount && right >= B.bothSidesCount);
+  }
+
+  smartBombAvailable() {
+    return CONFIG.smartBomb.enabled && this.wave >= CONFIG.smartBomb.startWave;
+  }
+
+  updateSmartBomb(dt) {
+    const B = CONFIG.smartBomb;
+    this.bombCooldown = Math.max(0, this.bombCooldown - dt);
+    if (!this.smartBombAvailable()) { this.bombHold = 0; return; }
+    this.bombHold = this.isSurrounded() ? this.bombHold + dt : 0;
+    const onScreen = this.pickups.filter((pk) => pk.kind === 'smart_bomb').length;
+    if (this.bombHold >= B.holdSeconds && this.bombCooldown <= 0 && onScreen < B.maxOnScreen) {
+      this.spawnSmartBomb();
+    }
+  }
+
+  /** public so tests / debug can force one (ignores wave / cooldown / surround checks) */
+  spawnSmartBomb(x = null) {
+    const B = CONFIG.smartBomb;
+    const P = CONFIG.player;
+    const px = this.player.x;
+    if (x === null) {
+      let l = 0;
+      let r = 0;
+      for (const e of this.enemies) if (e.state === 'alive') { if (e.x < px) l += 1; else r += 1; }
+      let side = l === r ? (Math.random() < 0.5 ? -1 : 1) : l < r ? -1 : 1;
+      // keep it on the walkable pavement: flip sides if the chosen side has no room
+      const off = rand(...B.spawnOffset);
+      if (px + side * off < P.minX + 40 || px + side * off > P.maxX - 40) side = -side;
+      x = clamp(px + side * off, P.minX + 40, P.maxX - 40);
+    }
+    const pk = this.spawnPickup('smart_bomb', x);
+    this.bombCooldown = B.cooldownSeconds;
+    this.bombHold = 0;
+    this.floatText(pk.x, CONFIG.player.groundY - 210, 'SMART BOMB!', '#ffe14a', 1.1);
+    sfx.wave();
+    return pk;
+  }
+
+  detonateSmartBomb(pk = null) {
+    const B = CONFIG.smartBomb;
+    const P = CONFIG.player;
+    const cx = pk ? pk.x : this.player.x;
+    const cy = P.groundY - 90;
+    this.smartBombs += 1;
+    let killed = 0;
+    for (const e of this.enemies) {
+      if (e.state !== 'alive') continue;
+      if (B.onScreenOnly) {
+        const img = this.A.img['enemy:' + e.type];
+        const half = (img.width * e.def.scale) / 2;
+        if (e.x + half < 0 || e.x - half > W) continue;
+      }
+      this.killEnemy(e, true, { silent: true });
+      killed += 1;
+    }
+    this.pickups = this.pickups.filter((q) => q.kind !== 'smart_bomb');
+    this.bombHold = 0;
+    this.flash = { color: B.flashColor, a: B.flashAlpha };
+    this.shake = B.shakeSeconds;
+    this.aura = 0;
+    this.rings.push({ x: cx, y: cy, r: 10, max: 700, a: 1, color: '#ffffff' });
+    this.rings.push({ x: cx, y: cy, r: 0, max: 1000, a: 1, color: '#b6ff2a', delay: 0.06 });
+    this.rings.push({ x: cx, y: cy, r: 0, max: 1400, a: 1, color: '#3fd01a', delay: 0.14 });
+    this.burst(cx, cy, 90, GREENS, 900, 1.2, 14, -40);
+    this.burst(cx, cy, 50, ['#ffffff', '#ffe14a', '#ff9a1a'], 700, 0.8, 12, 120);
+    this.floatText(cx, P.groundY - 260, 'SMART BOMB!', '#b6ff2a', 1.6);
+    sfx.bomb();
+    return killed;
   }
 
   // ----------------------------------------------------------------- effects
@@ -448,7 +543,7 @@ export class Game {
     if (this.mode !== 'menu') {
       const items = [];
       for (const e of this.enemies) items.push({ y: e.y + (e.def.flying ? 400 : 0), draw: () => this.drawEnemy(g, e) });
-      for (const pk of this.pickups) items.push({ y: CONFIG.player.groundY - 5, draw: () => this.drawPickup(g, pk) });
+      for (const pk of this.pickups) items.push({ y: CONFIG.player.groundY + (pk.kind === 'smart_bomb' ? 40 : -5), draw: () => this.drawPickup(g, pk) });
       items.push({ y: CONFIG.player.groundY, draw: () => this.drawPlayer(g) });
       items.sort((a, b) => a.y - b.y);
       for (const it of items) it.draw();
@@ -567,17 +662,19 @@ export class Game {
 
   drawPickup(g, pk) {
     const A = this.A;
-    const def = CONFIG.collectibles[pk.kind];
+    const isBomb = pk.kind === 'smart_bomb';
+    const def = isBomb ? CONFIG.smartBomb : CONFIG.collectibles[pk.kind];
     const img = A.img['col:' + pk.kind];
     const w = img.width * def.scale;
     const h = img.height * def.scale;
     const bob = Math.sin(pk.t * 4) * 9;
     const y = CONFIG.player.groundY - 70 + bob;
-    if (pk.life < 2 && Math.floor(pk.life * 8) % 2 === 0) return;
+    const warn = isBomb ? CONFIG.smartBomb.blinkSeconds : 2;
+    if (pk.life < warn && Math.floor(pk.life * (isBomb ? 10 : 8)) % 2 === 0) return;
     this.shadow(g, pk.x, CONFIG.player.groundY, w * 0.9);
     const glow = g.createRadialGradient(pk.x, y - h / 2, 5, pk.x, y - h / 2, 90);
-    glow.addColorStop(0, 'rgba(255,214,60,0.55)');
-    glow.addColorStop(1, 'rgba(255,214,60,0)');
+    glow.addColorStop(0, isBomb ? 'rgba(255,90,40,0.6)' : 'rgba(255,214,60,0.55)');
+    glow.addColorStop(1, isBomb ? 'rgba(255,90,40,0)' : 'rgba(255,214,60,0)');
     g.fillStyle = glow;
     g.fillRect(pk.x - 100, y - h / 2 - 100, 200, 200);
     g.imageSmoothingEnabled = false;

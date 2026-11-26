@@ -53,6 +53,8 @@ img { image-rendering: pixelated; }
 .stat b { color: #fff; font-weight: 700; }
 .stat em { color: #ffee00; font-style: normal; }
 .gicon { height: 36px; width: auto; margin: 0 8px 0 14px; image-rendering: pixelated; }
+.bomb-ready .gicon { animation: bombPulse .5s steps(2) infinite; }
+@keyframes bombPulse { 50% { filter: drop-shadow(0 0 6px #ff5a28) brightness(1.4); } }
 .btn { cursor: pointer; pointer-events: auto; font-family: inherit; }
 .btn:hover .in { background: #2a0040; }
 .btn:active .in { background: #5a0090; }

@@ -55,6 +55,12 @@ export const sfx = {
   hurt: () => beep({ f: 160, f2: 60, t: 0.28, type: 'sawtooth', v: 1 }),
   can: () => { beep({ f: 880, t: 0.08 }); beep({ f: 1320, t: 0.14, delay: 0.08 }); },
   mask: () => { [660, 880, 1100, 1480].forEach((f, i) => beep({ f, t: 0.12, type: 'triangle', delay: i * 0.07 })); },
+  bomb: () => {
+    noise(0.7, 1.4);
+    beep({ f: 900, f2: 40, t: 0.7, type: 'sawtooth', v: 1.2 });
+    beep({ f: 140, f2: 35, t: 0.9, type: 'square', v: 1.2, delay: 0.05 });
+    [440, 660, 990].forEach((f, i) => beep({ f, t: 0.1, type: 'triangle', delay: 0.5 + i * 0.07 }));
+  },
   start: () => { beep({ f: 440, t: 0.08 }); beep({ f: 660, t: 0.12, delay: 0.08 }); },
   wave: () => { beep({ f: 330, t: 0.1 }); beep({ f: 440, t: 0.1, delay: 0.1 }); beep({ f: 554, t: 0.18, delay: 0.2 }); },
   over: () => { [440, 330, 247, 165].forEach((f, i) => beep({ f, t: 0.25, type: 'sawtooth', delay: i * 0.2 })); },

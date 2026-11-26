@@ -72,6 +72,7 @@ async function boot() {
   // ---------------------------------------------------------- static HUD bits
   $('ico-can').src = url(CONFIG.collectibles.gold_can.sprite);
   $('ico-mask').src = url(CONFIG.collectibles.gold_mask.sprite);
+  $('ico-bomb').src = A.img['col:smart_bomb'].src;
   const sprayed = $('hud-sprayed');
   sprayed.innerHTML = '<span class="lbl">SPRAYED:</span>&nbsp;' + CONFIG.hudKillOrder.map((k, i) =>
     `${i ? '<span class="sep">|</span>' : ''}<span class="stat"><b>${CONFIG.enemies[k].label}${k === 'fents' ? ':' : ''}</b><em id="k-${k}">00</em></span>`).join('');
@@ -88,6 +89,9 @@ async function boot() {
     setText('wave', $('hud-wave'), pad(game.wave));
     setText('can', $('hud-can'), pad(game.gold.gold_can));
     setText('mask', $('hud-mask'), pad(game.gold.gold_mask));
+    setText('bomb', $('hud-bomb'), pad(game.smartBombs));
+    const pending = game.pickups.some((pk) => pk.kind === 'smart_bomb');
+    if (cache.bombPending !== pending) { cache.bombPending = pending; $('hud-bomb-wrap').classList.toggle('bomb-ready', pending); }
     for (const k of CONFIG.hudKillOrder) setText('k' + k, kEls[k], pad(game.kills[k]));
     const on = Math.ceil(game.health / 10);
     if (cache.hp !== on) {
@@ -215,7 +219,7 @@ async function boot() {
     const s = game.summary;
     $('go-score').textContent = pad(s.score, 6);
     $('go-stats').innerHTML = CONFIG.hudKillOrder.map((k) => `${CONFIG.enemies[k].label} <b>${pad(s.kills[k])}</b>`).join(' &nbsp;|&nbsp; ')
-      + `<br/>GOLD CANS <b>${pad(s.gold.gold_can)}</b> &nbsp;|&nbsp; MASKS <b>${pad(s.gold.gold_mask)}</b> &nbsp;|&nbsp; WAVE <b>${pad(s.wave)}</b>`;
+      + `<br/>GOLD CANS <b>${pad(s.gold.gold_can)}</b> &nbsp;|&nbsp; MASKS <b>${pad(s.gold.gold_mask)}</b> &nbsp;|&nbsp; SMART BOMBS <b>${pad(s.smartBombs)}</b> &nbsp;|&nbsp; WAVE <b>${pad(s.wave)}</b>`;
     showMode();
   }
 

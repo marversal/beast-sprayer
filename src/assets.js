@@ -57,6 +57,9 @@ export async function loadAssets() {
   for (const ch of characters) { reg('player:' + ch.key, ch.sprite); reg('head:' + ch.key, ch.head); }
   for (const k of Object.keys(CONFIG.enemies)) reg('enemy:' + k, `assets/sprites/enemies/${k}.png`);
   for (const [k, v] of Object.entries(CONFIG.collectibles)) if (v && v.sprite) reg('col:' + k, v.sprite);
+  const mBomb = manifest && Array.isArray(manifest.collectibles) && manifest.collectibles.find((c) => c.key === 'smart_bomb');
+  const bombSprite = (mBomb && mBomb.sprite) || CONFIG.smartBomb.sprite;
+  if (bombSprite) reg('col:smart_bomb', bombSprite);
   for (const t of CONFIG.spray.tiers) reg('spray:' + t.id, t.sprite);
   await Promise.all(jobs);
 

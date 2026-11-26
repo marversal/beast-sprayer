@@ -5,6 +5,15 @@
 //  (editable after build, no rebuild needed); CONFIG.characters below is
 //  only the fallback used if the manifest cannot be fetched.
 // =====================================================================
+// Debug / test overrides via URL query string, e.g.  index.html?startWave=13
+//   ?startWave=N            first wave of a session is wave N (jump ahead, e.g. to test the smart bomb)
+//   ?smartBombStartWave=N   override CONFIG.smartBomb.startWave
+const query = new URLSearchParams(typeof location !== 'undefined' ? location.search : '');
+const queryInt = (name) => {
+  const v = parseInt(query.get(name), 10);
+  return Number.isFinite(v) && v >= 1 ? v : null;
+};
+
 export const CONFIG = {
   stage: { width: 1672, height: 941 },
 
@@ -61,6 +70,7 @@ export const CONFIG = {
   hudKillOrder: ['bots', 'drones', 'cops', 'dogs', 'fents', 'heros'],
 
   waves: {
+    startWave: queryInt('startWave') ?? 1, // debug: ?startWave=13
     firstWaveDelay: 1.2,
     betweenWaves: 2.6,
     baseCount: 8,          // enemies in wave 1
@@ -80,6 +90,33 @@ export const CONFIG = {
     dropChanceOnKill: 0.07,
     lifetime: 9,
     pickupRadius: 70,
+  },
+
+  // Smart bomb: a special pickup that appears when the player is heavily surrounded.
+  // Walking over it detonates it and vaporises every enemy currently on screen
+  // (normal points + HUD SPRAYED counters still apply).
+  smartBomb: {
+    enabled: true,
+    // "After wave 13" is interpreted as wave 13 and up (flagged for confirmation in README).
+    startWave: queryInt('smartBombStartWave') ?? 13,
+    sprite: 'assets/sprites/collectibles/smart_bomb.png',
+    scale: 0.38,             // sprite is 249x321 -> drawn ~95x122
+    surroundCount: 5,        // trigger A: this many alive enemies within surroundRadius (px, horizontal)...
+    surroundRadius: 450,
+    bothSidesCount: 2,       // trigger B: at least this many alive enemies on EACH side within bothSidesRadius
+    bothSidesRadius: 300,
+    holdSeconds: 0.4,        // the surrounded condition must hold this long before a pickup spawns
+    cooldownSeconds: 20,     // minimum time between pickup spawns
+    initialCooldownSeconds: 4, // after a session starts / replay
+    maxOnScreen: 1,
+    lifetime: 9,             // seconds before an uncollected pickup expires
+    blinkSeconds: 3,         // blinking warning during the last N seconds
+    spawnOffset: [120, 210], // px from the player (on the side with fewer enemies)
+    pickupRadius: 80,
+    onScreenOnly: true,      // only enemies currently visible are destroyed
+    shakeSeconds: 0.7,
+    flashColor: '#d8ff5a',
+    flashAlpha: 0.85,
   },
 
   audio: { enabled: true, volume: 0.12 },

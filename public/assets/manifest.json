@@ -3,5 +3,8 @@
   "characters": [
     { "key": "bear", "id": "5761", "sprite": "assets/sprites/players/bear.png", "head": "assets/ui/head_bear.png", "muzzle": [306, 128] },
     { "key": "white_horned", "id": "541", "sprite": "assets/sprites/players/white_horned.png", "head": "assets/ui/head_white_horned.png", "muzzle": [308, 150] }
+  ],
+  "collectibles": [
+    { "key": "smart_bomb", "label": "SMART BOMB", "sprite": "assets/sprites/collectibles/smart_bomb.png", "startWave": 13, "_note": "startWave here is informational only; the gameplay value is CONFIG.smartBomb.startWave (src/config.js)" }
   ]
 }
