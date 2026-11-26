@@ -73,8 +73,22 @@ Or import manually at <https://vercel.com/new/import?s=https://github.com/marver
 
 ## Configuration
 
-- `src/config.js` - the `CONFIG` object at the top of the file: player speed/health/lives, **spray range / damage / cooldown / speed / pierce per tier**, particle behaviour (`particlesPerHit`, `particleSpeed`, `particleGravity`, `particleLife`, `vaporizeSeconds`), the **enemy table (points, hp, speed, damage, scale)**, wave ramp, collectible values / spawn rates, **smart bomb rules**, audio volume. Edit and `npm run build`.
+- `src/config.js` - the `CONFIG` object at the top of the file: player speed/health/lives, **spray range / damage / cooldown / speed / pierce per tier**, particle behaviour (`particlesPerHit`, `particleSpeed`, `particleGravity`, `particleLife`, `vaporizeSeconds`), the **enemy table (points, hp, speed, damage, scale)**, wave ramp (incl. the eased waves 8-12), collectible values / spawn rates, **smart bomb rules**, audio volume. Edit and `npm run build`.
 - `public/assets/manifest.json` (and `dist/assets/manifest.json`) - **character IDs and sprites**. Editable on the built game without rebuilding.
+
+### Difficulty ramp (eased waves 8-12)
+
+So that a normal player can reach wave 13 (smart bomb), waves 8-12 use a gentler ramp via `CONFIG.waves.ease` (`src/config.js`). Waves 1-7 and 13+ keep the original, steeper values (`countPerWave 4`, `spawnIntervalStep 0.09`, `speedRampPerWave 0.09`, `maxAlive 18`), so wave 13+ resumes climbing at the original rate (from a slightly lower starting point). Changes for waves 8-12:
+
+| Setting | Before | Waves 8-12 now |
+|---|---|---|
+| `countPerWave` (extra enemies per wave) | +4 | +2 |
+| `speedRampPerWave` (walker speed growth per wave) | +9 % | +4 % |
+| `spawnIntervalStep` (spawn interval shrink per wave) | 0.09 s | 0.06 s |
+| `maxAlive` (concurrent enemy cap) | 18 | 14 |
+| `healOnWaveStart` (new: health restored when an eased wave starts) | none | +40 |
+
+Resulting numbers: wave 12 has 42 enemies (was 52) at 1.74x speed (was 1.99x); wave 13 has 46 (was 56) at 1.83x (was 2.08x). Set `ease.enabled: false` for the original curve. Measured with an imperfect bot (reaction delay, backs off, 3 lives): reaches wave 13 in 47 of 48 runs (was 19 of 48); median wave reached 16 (was 12).
 
 ### Smart bomb settings and debug hook
 

@@ -160,6 +160,37 @@ export class Game {
     sfx.spray();
   }
 
+  /** true when `wave` falls in the eased (gentler) part of the difficulty ramp */
+  isEased(wave) {
+    const E = CONFIG.waves.ease;
+    return !!E && E.enabled && wave >= E.fromWave && wave <= E.toWave;
+  }
+
+  /** base + per-wave increments, using the eased increment for eased waves (wave 1 = base) */
+  rampValue(base, key, easedKey, wave) {
+    const Wv = CONFIG.waves;
+    let v = base;
+    for (let k = 2; k <= wave; k++) v += this.isEased(k) ? Wv.ease[easedKey] : Wv[key];
+    return v;
+  }
+
+  enemiesForWave(wave) {
+    return Math.round(this.rampValue(CONFIG.waves.baseCount, 'countPerWave', 'countPerWave', wave));
+  }
+
+  speedMulForWave(wave) {
+    return Math.min(2.2, this.rampValue(1, 'speedRampPerWave', 'speedRampPerWave', wave));
+  }
+
+  spawnIntervalForWave(wave) {
+    const Wv = CONFIG.waves;
+    return Math.max(Wv.spawnIntervalMin, Wv.spawnIntervalStart - this.rampValue(0, 'spawnIntervalStep', 'spawnIntervalStep', wave));
+  }
+
+  maxAliveForWave(wave) {
+    return this.isEased(wave) ? CONFIG.waves.ease.maxAlive : CONFIG.waves.maxAlive;
+  }
+
   updateWaves(dt) {
     const Wv = CONFIG.waves;
     if (this.toSpawn <= 0 && this.enemies.length === 0) {
@@ -168,7 +199,8 @@ export class Game {
         this.wave += 1;
         this.waveClock = 0;
         this.bombThisWave = false;
-        this.toSpawn = Wv.baseCount + Wv.countPerWave * (this.wave - 1);
+        this.toSpawn = this.enemiesForWave(this.wave);
+        if (this.isEased(this.wave)) this.health = Math.min(CONFIG.player.maxHealth, this.health + Wv.ease.healOnWaveStart);
         this.spawnTimer = 0.4;
         this.waveDelay = Wv.betweenWaves;
         this.banner = 2.0;
@@ -178,10 +210,10 @@ export class Game {
     if (this.banner > 0) this.banner -= dt;
     if (this.toSpawn > 0) {
       this.spawnTimer -= dt;
-      if (this.spawnTimer <= 0 && this.enemies.filter((e) => e.state === 'alive').length < Wv.maxAlive) {
+      if (this.spawnTimer <= 0 && this.enemies.filter((e) => e.state === 'alive').length < this.maxAliveForWave(this.wave)) {
         this.spawnEnemy();
         this.toSpawn -= 1;
-        this.spawnTimer = Math.max(Wv.spawnIntervalMin, Wv.spawnIntervalStart - Wv.spawnIntervalStep * (this.wave - 1)) * rand(0.7, 1.3);
+        this.spawnTimer = this.spawnIntervalForWave(this.wave) * rand(0.7, 1.3);
       }
     }
   }
@@ -200,7 +232,7 @@ export class Game {
     const M = CONFIG.waves.spawnMargin;
     const fromLeft = x === null ? Math.random() < 0.5 : x < W / 2;
     const px = x === null ? (fromLeft ? -M : W + M) : x;
-    const speedMul = Math.min(2.2, 1 + CONFIG.waves.speedRampPerWave * Math.max(0, this.wave - 1));
+    const speedMul = this.speedMulForWave(this.wave);
     const e = {
       type, def, x: px, hp: def.hp, state: 'alive', t: 0, flash: 0, seed: Math.random() * 10,
       speed: def.speed * speedMul * rand(0.9, 1.1), face: 1, vaporT: 0,

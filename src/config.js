@@ -78,9 +78,22 @@ export const CONFIG = {
     spawnIntervalStart: 1.1,
     spawnIntervalMin: 0.3,
     spawnIntervalStep: 0.09, // shorter each wave
-    speedRampPerWave: 0.09,  // +7% enemy speed per wave
+    speedRampPerWave: 0.09,  // +9% enemy speed per wave
     spawnMargin: 120,
     maxAlive: 18,
+    // Gentler ramp for waves fromWave..toWave (inclusive) so a normal player can reach wave 13
+    // (smart bomb). Waves before fromWave and after toWave use the steeper values above, so
+    // wave 13+ keeps climbing at the original rate. Set `enabled: false` for the original curve.
+    ease: {
+      enabled: true,
+      fromWave: 8,
+      toWave: 12,
+      countPerWave: 2,
+      spawnIntervalStep: 0.06,
+      speedRampPerWave: 0.04,
+      maxAlive: 14,
+      healOnWaveStart: 40,   // health restored when an eased wave starts (0-100)
+    },
   },
 
   collectibles: {
