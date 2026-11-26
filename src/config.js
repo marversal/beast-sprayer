@@ -100,19 +100,24 @@ export const CONFIG = {
     // "After wave 13" is interpreted as wave 13 and up (flagged for confirmation in README).
     startWave: queryInt('smartBombStartWave') ?? 13,
     sprite: 'assets/sprites/collectibles/smart_bomb.png',
-    scale: 0.38,             // sprite is 249x321 -> drawn ~95x122
-    surroundCount: 5,        // trigger A: this many alive enemies within surroundRadius (px, horizontal)...
-    surroundRadius: 450,
+    scale: 0.45,             // sprite is 249x321 -> drawn ~112x144
+    surroundCount: 3,        // trigger A: this many alive enemies within surroundRadius (px, horizontal)...
+    surroundRadius: 500,
     bothSidesCount: 2,       // trigger B: at least this many alive enemies on EACH side within bothSidesRadius
-    bothSidesRadius: 300,
-    holdSeconds: 0.4,        // the surrounded condition must hold this long before a pickup spawns
-    cooldownSeconds: 20,     // minimum time between pickup spawns
-    initialCooldownSeconds: 4, // after a session starts / replay
+    bothSidesRadius: 380,
+    contactWindowSeconds: 3, // trigger C: an enemy touched / hurt the player within this window...
+    contactNearCount: 2,     //   ...and at least this many alive enemies are within contactNearRadius
+    contactNearRadius: 450,
+    holdSeconds: 0.15,       // the surrounded condition must hold this long before a pickup spawns
+    cooldownSeconds: 15,     // minimum time between pickup spawns
+    initialCooldownSeconds: 2, // after a session starts / replay
+    fallbackSeconds: 8,      // guarantee: if no pickup appeared this long after a wave 13+ wave started
+    fallbackMinEnemies: 3,   //   and this many enemies are alive, spawn one anyway (ignores the cooldown)
     maxOnScreen: 1,
     lifetime: 9,             // seconds before an uncollected pickup expires
     blinkSeconds: 3,         // blinking warning during the last N seconds
     spawnOffset: [120, 210], // px from the player (on the side with fewer enemies)
-    pickupRadius: 80,
+    pickupRadius: 90,
     onScreenOnly: true,      // only enemies currently visible are destroyed
     shakeSeconds: 0.7,
     flashColor: '#d8ff5a',

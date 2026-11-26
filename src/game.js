@@ -31,6 +31,9 @@ export class Game {
     this.smartBombs = 0;
     this.bombCooldown = CONFIG.smartBomb.initialCooldownSeconds;
     this.bombHold = 0;
+    this.waveClock = 0;
+    this.bombThisWave = false;
+    this.contactClock = 1e9;
     this.lives = P.lives;
     this.health = P.maxHealth;
     this.player = { x: W / 2, face: 1, vx: 0, invuln: 0, cooldown: 0, recoil: 0, walk: 0 };
@@ -163,6 +166,8 @@ export class Game {
       this.waveDelay -= dt;
       if (this.waveDelay <= 0) {
         this.wave += 1;
+        this.waveClock = 0;
+        this.bombThisWave = false;
         this.toSpawn = Wv.baseCount + Wv.countPerWave * (this.wave - 1);
         this.spawnTimer = 0.4;
         this.waveDelay = Wv.betweenWaves;
@@ -243,6 +248,7 @@ export class Game {
 
   enemyHitsPlayer(e) {
     e.state = 'gone';
+    this.contactClock = 0;
     const b = this.enemyBox(e);
     this.burst(e.x, b.cy, 18, ['#ffffff', '#cfcfcf', '#8a8a8a'], 220, 0.45, 8, 0);
     this.hurtPlayer(e.def.damage, e.x);
@@ -405,21 +411,25 @@ export class Game {
   }
 
   // -------------------------------------------------------------- smart bomb
-  /** alive enemies that count towards "heavily surrounded" */
+  /** "heavily surrounded": crowd nearby, close on both sides, or recent contact with a few more close */
   isSurrounded() {
     const B = CONFIG.smartBomb;
     const px = this.player.x;
     let near = 0;
     let left = 0;
     let right = 0;
+    let contactNear = 0;
     for (const e of this.enemies) {
       if (e.state !== 'alive') continue;
       const dx = e.x - px;
       const ad = Math.abs(dx);
       if (ad <= B.surroundRadius) near += 1;
+      if (ad <= B.contactNearRadius) contactNear += 1;
       if (ad <= B.bothSidesRadius) { if (dx < 0) left += 1; else right += 1; }
     }
-    return near >= B.surroundCount || (left >= B.bothSidesCount && right >= B.bothSidesCount);
+    return near >= B.surroundCount
+      || (left >= B.bothSidesCount && right >= B.bothSidesCount)
+      || (this.contactClock <= B.contactWindowSeconds && contactNear >= B.contactNearCount);
   }
 
   smartBombAvailable() {
@@ -429,10 +439,18 @@ export class Game {
   updateSmartBomb(dt) {
     const B = CONFIG.smartBomb;
     this.bombCooldown = Math.max(0, this.bombCooldown - dt);
+    this.contactClock += dt;
+    this.waveClock += dt;
     if (!this.smartBombAvailable()) { this.bombHold = 0; return; }
-    this.bombHold = this.isSurrounded() ? this.bombHold + dt : 0;
     const onScreen = this.pickups.filter((pk) => pk.kind === 'smart_bomb').length;
-    if (this.bombHold >= B.holdSeconds && this.bombCooldown <= 0 && onScreen < B.maxOnScreen) {
+    if (onScreen >= B.maxOnScreen) { this.bombHold = 0; return; }
+    this.bombHold = this.isSurrounded() ? this.bombHold + dt : 0;
+    if (this.bombHold >= B.holdSeconds && this.bombCooldown <= 0) {
+      this.spawnSmartBomb();
+      return;
+    }
+    if (!this.bombThisWave && this.waveClock >= B.fallbackSeconds
+      && this.enemies.filter((e) => e.state === 'alive').length >= B.fallbackMinEnemies) {
       this.spawnSmartBomb();
     }
   }
@@ -455,6 +473,7 @@ export class Game {
     const pk = this.spawnPickup('smart_bomb', x);
     this.bombCooldown = B.cooldownSeconds;
     this.bombHold = 0;
+    this.bombThisWave = true;
     this.floatText(pk.x, CONFIG.player.groundY - 210, 'SMART BOMB!', '#ffe14a', 1.1);
     sfx.wave();
     return pk;
@@ -683,6 +702,36 @@ export class Game {
     const tw = (Math.sin(pk.t * 6) + 1) / 2;
     g.fillStyle = `rgba(255,255,220,${tw})`;
     g.fillRect(pk.x + w / 2 - 6, y - h + 4, 8, 8);
+    if (isBomb) this.drawBombHint(g, pk, y - h, w);
+  }
+
+  /** pulsing label + bobbing arrow so the pickup is impossible to miss */
+  drawBombHint(g, pk, topY, w) {
+    const pulse = 1 + Math.sin(pk.t * 9) * 0.12;
+    const ly = topY - 46 - Math.abs(Math.sin(pk.t * 5)) * 10;
+    g.save();
+    g.textAlign = 'center';
+    g.translate(pk.x, ly);
+    g.scale(pulse, pulse);
+    g.font = '700 38px "Chakra Petch", sans-serif';
+    g.lineWidth = 8;
+    g.lineJoin = 'round';
+    g.strokeStyle = '#08001a';
+    g.strokeText('SMART BOMB!', 0, 0);
+    g.fillStyle = Math.floor(pk.t * 6) % 2 ? '#ffe14a' : '#ff5a28';
+    g.fillText('SMART BOMB!', 0, 0);
+    g.restore();
+    const ay = topY - 22 + Math.sin(pk.t * 8) * 6;
+    g.fillStyle = '#ffe14a';
+    g.strokeStyle = '#08001a';
+    g.lineWidth = 5;
+    g.beginPath();
+    g.moveTo(pk.x - 16, ay - 14);
+    g.lineTo(pk.x + 16, ay - 14);
+    g.lineTo(pk.x, ay + 8);
+    g.closePath();
+    g.stroke();
+    g.fill();
   }
 
   drawParticles(g) {
